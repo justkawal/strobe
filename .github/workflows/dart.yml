@@ -16,6 +16,10 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
+      
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: true
 
     steps:
       - uses: actions/checkout@v3.5.0
@@ -38,10 +42,14 @@ jobs:
       # Consider passing '--fatal-infos' for slightly stricter analysis.
       - name: Analyze project source
         run: dart analyze --fatal-infos
+      
+      # Run tests
+      - name: Run Tests
+        run: dart test --fail-fast
 
-      # Run test coverage
+      # Run coverage
       - name: Run Coverage
-        run: dart test --coverage ./coverage
+        run: dart test --fail-fast --coverage ./coverage
       
       # Code coverage
       - uses: codecov/codecov-action@v3
