@@ -1,5 +1,5 @@
 name: strobe
-description: Strobe
+description: Strobe contains implementation of the [Strobe protocol framework](https://strobe.sourceforge.io/).
 version: 1.0.1
 repository: https://github.com/justkawal/strobe
 

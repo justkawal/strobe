@@ -9,14 +9,14 @@ import 'package:convert/convert.dart';
 import 'package:strobe/strobe.dart';
 
 void main() {
-  final Strobe s =
-      Strobe.initStrobe('AnyStrobeHash', Security.bit128);
+  final Strobe s = Strobe.initStrobe('custom_hash', Security.bit128);
 
-  final List<int> message = utf8.encode('Hello sir, How\'s your day going?');
+  final List<int> message =
+      utf8.encode('Hello, Drop a star if you like this repo!');
   s.aD(false, message); // meta = false
 
-  // output length = 16 
-  // c96ff4e5cb10c20168af74e25b3cd4d3
+  // output length = 16
+  // 7ce830010a697657a77b71efff657dd8
   print(hex.encode(s.prf(16)));
 }
 ```

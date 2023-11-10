@@ -487,7 +487,7 @@ class Strobe {
       for (int dataByte in data) {
         failures |= dataByte;
       }
-      return [failures]; // 0 if correct, 1 if not
+      return <int>[failures]; // 0 if correct, 1 if not
     }
 
     return [];
