@@ -1,0 +1,14 @@
+name: strobe
+description: Strobe
+version: 1.0.1
+repository: https://github.com/justkawal/strobe
+
+environment:
+  sdk: ^3.1.5
+
+dependencies:
+  convert: ^3.1.1
+
+dev_dependencies:
+  lints: ^3.0.0
+  test: ^1.21.0
