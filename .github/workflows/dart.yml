@@ -43,13 +43,18 @@ jobs:
       - name: Run Tests
         run: dart test --fail-fast
 
+      # Activate coverage
+      - name: Activate Coverage
+        run: dart pub global activate coverage
+
       # Run coverage
       - name: Run Coverage
-        run: dart test --fail-fast --coverage ./coverage
+        run: dart pub global run coverage:test_with_coverage
       
       # Code coverage
       - uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          directory: ./${{ matrix.package }}/coverage/tests/
+          files: coverage.json
+          directory: ./coverage/
 
