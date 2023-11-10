@@ -20,3 +20,6 @@ void main() {
   print(hex.encode(s.prf(16)));
 }
 ```
+
+## Donate
+If you like this repo and found it useful, please consider **donating ❤️**!! Donation goes towards my tuition fees and helps me maintain strobe and other repos. Thank you so much!!`
