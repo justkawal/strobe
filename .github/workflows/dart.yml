@@ -40,10 +40,15 @@ jobs:
       # want to change this to 'flutter test'.
       - name: Run tests
         run: dart test
+
+      # Run test coverage
+      - name: Run Coverage
+        run: dart test --coverage ./coverage
       
       # Code coverage
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v3
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          directory: ./coverage/test/
 
