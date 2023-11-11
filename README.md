@@ -4,7 +4,7 @@ This repository contains an implementation of the [Strobe protocol framework](ht
 [![codecov](https://codecov.io/gh/justkawal/strobe/graph/badge.svg?token=8FERML02AR)](https://codecov.io/gh/justkawal/strobe)
 [![Licence](https://img.shields.io/badge/License-MIT-red.svg)](./LICENSE)
 ![GitHub contributors](https://img.shields.io/github/contributors/justkawal/strobe)
-![Github Repo Stars](https://img.shields.io/github/stars/justkawal/strobe)
+[![Github Repo Stars](https://img.shields.io/github/stars/justkawal/strobe)](https://github.com/justkawal/strobe/stargazers)
 ![GitHub Sponsors](https://img.shields.io/github/sponsors/justkawal)
 
 
