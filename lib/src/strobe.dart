@@ -16,7 +16,7 @@ class Strobe {
 
   /// KEY inserts a key into the state.
   /// It also provides forward secrecy.
-  void key(List<int> key) {
+  void key(Uint8List key) {
     operate(false, 'KEY', key, 0, false);
   }
 
@@ -26,61 +26,61 @@ class Strobe {
   /// PRF provides a hash of length `output_len` of all previous operations
   /// It can also be used to generate random numbers, it is forward secure.
   List<int> prf(int outputLen) {
-    return operate(false, 'PRF', <int>[], outputLen, false);
+    return operate(false, 'PRF', Uint8List(0), outputLen, false);
   }
 
   /// Send_ENC_unauthenticated is used to encrypt some plaintext
   /// it should be followed by Send_MAC in order to protect its integrity
   /// `meta` is used for encrypted framing data.
-  List<int> sendEncUnauthenticated(bool meta, List<int> plaintext) {
+  List<int> sendEncUnauthenticated(bool meta, Uint8List plaintext) {
     return operate(meta, 'send_ENC', plaintext, 0, false);
   }
 
   /// Recv_ENC_unauthenticated is used to decrypt some received ciphertext
   /// it should be followed by Recv_MAC in order to protect its integrity
   /// `meta` is used for decrypting framing data.
-  List<int> recvEncUnauthenticated(bool meta, List<int> ciphertext) {
+  List<int> recvEncUnauthenticated(bool meta, Uint8List ciphertext) {
     return operate(meta, 'recv_ENC', ciphertext, 0, false);
   }
 
   /// AD allows you to authenticate Additional Data
   /// it should be followed by a Send_MAC or Recv_MAC in order to truly work
-  void aD(bool meta, List<int> additionalData) {
+  void aD(bool meta, Uint8List additionalData) {
     operate(meta, 'AD', additionalData, 0, false);
   }
 
   /// Send_CLR allows you to send data in cleartext
   /// `meta` is used to send framing data
-  void sendClr(bool meta, List<int> cleartext) {
+  void sendClr(bool meta, Uint8List cleartext) {
     operate(meta, 'send_CLR', cleartext, 0, false);
   }
 
   /// Recv_CLR allows you to receive data in cleartext.
   /// `meta` is used to receive framing data
-  void recvClr(bool meta, List<int> cleartext) {
+  void recvClr(bool meta, Uint8List cleartext) {
     operate(meta, 'recv_CLR', cleartext, 0, false);
   }
 
   /// Send_MAC allows you to produce an authentication tag.
   /// `meta` is appropriate for checking the integrity of framing data.
   List<int> sendMac(bool meta, int outputLength) {
-    return operate(meta, 'send_MAC', <int>[], outputLength, false);
+    return operate(meta, 'send_MAC', Uint8List(0), outputLength, false);
   }
 
   /// Recv_MAC allows you to verify a received authentication tag.
   /// `meta` is appropriate for checking the integrity of framing data.
-  bool recvMac(bool meta, List<int> mac) {
+  bool recvMac(bool meta, Uint8List mac) {
     return operate(meta, 'recv_MAC', mac, 0, false)[0] == 0;
   }
 
   /// RATCHET allows you to introduce forward secrecy in a protocol.
   void ratchet(int length) {
-    operate(false, 'RATCHET', <int>[], length, false);
+    operate(false, 'RATCHET', Uint8List(0), length, false);
   }
 
   /// Send_AEAD allows you to encrypt data and authenticate additional data
   /// It is similar to AES-GCM.
-  List<int> sendAead(List<int> plaintext, List<int> ad) {
+  List<int> sendAead(Uint8List plaintext, Uint8List ad) {
     List<int> ciphertext = [];
     ciphertext.addAll(sendEncUnauthenticated(false, plaintext));
     aD(false, ad);
@@ -90,7 +90,7 @@ class Strobe {
 
   /// Recv_AEAD allows you to decrypt data and authenticate additional data
   /// It is similar to AES-GCM.
-  (List<int>, bool) recvAead(List<int> ciphertext, List<int> ad) {
+  (List<int>, bool) recvAead(Uint8List ciphertext, Uint8List ad) {
     List<int> plaintext = <int>[];
     bool ok = true;
 
@@ -425,7 +425,7 @@ class Strobe {
   /// Result is always retrieved through the return value. For boolean results,
   /// check that the first index is 0 for true, 1 for false.
   List<int> operate(
-      bool meta, String operation, List<int> dataConst, int length, bool more) {
+      bool meta, String operation, Uint8List dataConst, int length, bool more) {
     // Operation is valid?
     late int flags;
     if (_operationMap.containsKey(operation)) {
@@ -439,7 +439,7 @@ class Strobe {
       flags |= Flag.flagM.bit;
     }
 
-    late final List<int> data;
+    late final Uint8List data;
 
     if (((flags & (Flag.flagI.bit | Flag.flagT.bit)) !=
             (Flag.flagI.bit | Flag.flagT.bit)) &&
@@ -447,13 +447,13 @@ class Strobe {
       if (length == 0) {
         throw Exception('A length should be set for this operation.');
       }
-      data = List<int>.filled(length, 0);
+      data = Uint8List(length);
     } else {
       if (length != 0) {
         throw Exception(
             'Output length must be zero except for PRF, send_MAC, and RATCHET operations.');
       }
-      data = List<int>.from(dataConst);
+      data = Uint8List.fromList(dataConst);
     }
 
     if (more) {
