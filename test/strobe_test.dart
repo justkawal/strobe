@@ -6,7 +6,7 @@ import 'package:strobe/strobe.dart';
 import 'package:test/test.dart';
 
 void main() {
-  final List<int> message = utf8.encode("hello, how are you good sir?");
+  final Uint8List message = utf8.encode("hello, how are you good sir?");
   test('Strobe Clone Test', () {
     var s1 = Strobe.initStrobe("myHash", Security.bit128);
     var s2 = s1.clone();
