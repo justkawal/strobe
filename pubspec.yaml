@@ -1,6 +1,6 @@
 name: strobe
 description: Strobe contains implementation of the [Strobe protocol framework](https://strobe.sourceforge.io/).
-version: 1.0.2
+version: 1.0.3
 repository: https://github.com/justkawal/strobe
 
 environment:
