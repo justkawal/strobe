@@ -11,6 +11,15 @@ enum Security {
   const Security(this.bit);
 }
 
+/// STROBEVERSIONTAG = utf8.encode('STROBEv1.0.2');
+/// adding domain = [1, (0 ~~> (s.strobeR + 2) & 0xFF), 1, 0, 1, 96]; in front of strobe version tag
+/// replacing (s.strobeR + 2) & 0xFF with 0 as a proxy which could be replaced with strobeR in actual usage area.
+///
+/// length = 18
+final STROBEVERSIONTAG = List<int>.from(
+    [1, 0, 1, 0, 1, 96, 83, 84, 82, 79, 66, 69, 118, 49, 46, 48, 46, 50],
+    growable: false);
+
 class Strobe {
   Strobe._();
 
@@ -25,27 +34,27 @@ class Strobe {
 
   /// PRF provides a hash of length `output_len` of all previous operations
   /// It can also be used to generate random numbers, it is forward secure.
-  List<int> prf(int outputLen) {
+  Uint8List prf(int outputLen) {
     return operate(false, 'PRF', Uint8List(0), outputLen, false);
   }
 
   /// Send_ENC_unauthenticated is used to encrypt some plaintext
   /// it should be followed by Send_MAC in order to protect its integrity
   /// `meta` is used for encrypted framing data.
-  List<int> sendEncUnauthenticated(bool meta, Uint8List plaintext) {
+  Uint8List sendEncUnauthenticated(bool meta, Uint8List plaintext) {
     return operate(meta, 'send_ENC', plaintext, 0, false);
   }
 
   /// Recv_ENC_unauthenticated is used to decrypt some received ciphertext
   /// it should be followed by Recv_MAC in order to protect its integrity
   /// `meta` is used for decrypting framing data.
-  List<int> recvEncUnauthenticated(bool meta, Uint8List ciphertext) {
+  Uint8List recvEncUnauthenticated(bool meta, Uint8List ciphertext) {
     return operate(meta, 'recv_ENC', ciphertext, 0, false);
   }
 
   /// AD allows you to authenticate Additional Data
   /// it should be followed by a Send_MAC or Recv_MAC in order to truly work
-  void aD(bool meta, Uint8List additionalData) {
+  void aD(bool meta, List<int> additionalData) {
     operate(meta, 'AD', additionalData, 0, false);
   }
 
@@ -63,7 +72,7 @@ class Strobe {
 
   /// Send_MAC allows you to produce an authentication tag.
   /// `meta` is appropriate for checking the integrity of framing data.
-  List<int> sendMac(bool meta, int outputLength) {
+  Uint8List sendMac(bool meta, int outputLength) {
     return operate(meta, 'send_MAC', Uint8List(0), outputLength, false);
   }
 
@@ -80,12 +89,12 @@ class Strobe {
 
   /// Send_AEAD allows you to encrypt data and authenticate additional data
   /// It is similar to AES-GCM.
-  List<int> sendAead(Uint8List plaintext, Uint8List ad) {
+  Uint8List sendAead(Uint8List plaintext, Uint8List ad) {
     List<int> ciphertext = [];
     ciphertext.addAll(sendEncUnauthenticated(false, plaintext));
     aD(false, ad);
     ciphertext.addAll(sendMac(false, maclen));
-    return ciphertext;
+    return Uint8List.fromList(ciphertext);
   }
 
   /// Recv_AEAD allows you to decrypt data and authenticate additional data
@@ -124,12 +133,17 @@ class Strobe {
   late int curFlags;
 
   /// Duplex construction
-  List<BigInt> a = List<BigInt>.filled(25, BigInt.zero); // The actual state
-  List<int> buf =
-      <int>[]; // A pointer into the storage, it also serves as the `pos` variable
-  List<int> storage = <int>[]; // To-be-XORed (used for optimization purposes)
-  List<int> tempStateBuf =
-      <int>[]; // Utility slice used for temporary duplexing operations
+  /// The actual state
+  final List<BigInt> a = List<BigInt>.generate(25, (_) => BigInt.zero);
+
+  /// A pointer into the storage, it also serves as the `pos` variable
+  List<int> buf = <int>[];
+
+  /// To-be-XORed (used for optimization purposes)
+  List<int> storage = <int>[];
+
+  /// Utility slice used for temporary duplexing operations
+  Uint8List tempStateBuf = Uint8List(0);
 
   /// Clone allows you to clone a Strobe state.
   Strobe clone() {
@@ -140,9 +154,9 @@ class Strobe {
       ..posBegin = posBegin
       ..io = io
       ..curFlags = curFlags
-      ..a = List<BigInt>.from(a)
+      ..a.setAll(0, a)
       ..storage = List<int>.from(storage)
-      ..tempStateBuf = List<int>.from(tempStateBuf);
+      ..tempStateBuf = Uint8List.fromList(tempStateBuf);
     newStrobe.buf = newStrobe.storage.sublist(0, buf.length);
 
     return newStrobe;
@@ -274,7 +288,7 @@ class Strobe {
   }
 
   /// this only works for 8-byte alligned buffers
-  void outState(List<BigInt> state, List<int> b) {
+  void outState(List<BigInt> state, Uint8List b) {
     final n = b.length ~/ 8;
     for (int i = 0; i < n; i++) {
       Uint8List bytes = uint64ToBytes(state[i]);
@@ -329,8 +343,9 @@ class Strobe {
       ..io = Role.iNone
       ..initialized = false;
 
-    final List<int> domain = [1, (s.strobeR + 2) & 0xFF, 1, 0, 1, 12 * 8];
-    domain.addAll(utf8.encode('STROBEv1.0.2'));
+    final Uint8List domain = Uint8List(18);
+    domain.setAll(0, STROBEVERSIONTAG);
+    domain[1] = (s.strobeR + 2) & 0xFF;
 
     s
       ..buf = <int>[]
@@ -376,7 +391,7 @@ class Strobe {
   }
 
   /// duplex: the duplex call
-  void duplex(List<int> data, bool cbefore, bool cafter, bool forceF) {
+  void duplex(Uint8List data, bool cbefore, bool cafter, bool forceF) {
     int currentIndex = 0;
 
     // Process data block by block
@@ -424,8 +439,8 @@ class Strobe {
   /// a zero length.
   /// Result is always retrieved through the return value. For boolean results,
   /// check that the first index is 0 for true, 1 for false.
-  List<int> operate(
-      bool meta, String operation, Uint8List dataConst, int length, bool more) {
+  Uint8List operate(
+      bool meta, String operation, List<int> dataConst, int length, bool more) {
     // Operation is valid?
     late int flags;
     if (_operationMap.containsKey(operation)) {
@@ -487,10 +502,12 @@ class Strobe {
       for (int dataByte in data) {
         failures |= dataByte;
       }
-      return <int>[failures]; // 0 if correct, 1 if not
+      final result = Uint8List(1);
+      result[0] = failures; // 0 if correct, 1 if not
+      return result; // 0 if correct, 1 if not
     }
 
-    return [];
+    return Uint8List(0);
   }
 
   /// beginOp: starts an operation
@@ -505,7 +522,7 @@ class Strobe {
     final int oldBegin = posBegin;
     posBegin = (buf.length + 1).toUnsigned(8); // s.pos + 1
     final bool forceF = (flags & (Flag.flagC.bit | Flag.flagK.bit) != 0);
-    duplex([oldBegin, flags & 0xFF], false, false, forceF);
+    duplex(Uint8List.fromList([oldBegin, flags & 0xFF]), false, false, forceF);
   }
 }
 
