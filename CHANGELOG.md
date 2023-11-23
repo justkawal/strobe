@@ -10,3 +10,7 @@
 
 ## 1.0.3
 - Improvements
+
+## 1.0.4
+- Improvements
+- New version
