@@ -244,10 +244,10 @@ class Strobe {
 
     int currentIndex = 6;
     for (int i = 0; i < 25; i++) {
-      final value =
-          ByteData.sublistView(serialized, currentIndex, currentIndex + 8)
-              .getUint64(0, Endian.little);
-      s.a[i] = BigInt.from(value);
+      final data =
+          ByteData.sublistView(serialized, currentIndex, currentIndex + 8);
+      final value = readUint64LE(data, 0);
+      s.a[i] = value;
       currentIndex += 8;
     }
 
@@ -542,4 +542,10 @@ enum Role {
   iInitiator, // set if we send the first transport message
   iResponder, // set if we receive the first transport message
   iNone // starting value
+}
+
+BigInt readUint64LE(ByteData data, int offset) {
+  final lo = BigInt.from(data.getUint32(offset, Endian.little));
+  final hi = BigInt.from(data.getUint32(offset + 4, Endian.little));
+  return (hi << 32) | lo;
 }
