@@ -14,3 +14,6 @@
 ## 1.0.4
 - Improvements
 - New version
+
+## 1.0.5
+- Improved Web Support by @vjrj
